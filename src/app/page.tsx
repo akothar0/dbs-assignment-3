@@ -4,15 +4,43 @@ import { Show } from "@clerk/nextjs";
 export default function Home() {
   return (
     <div className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center px-4 text-center">
-      <div className="mb-8 text-6xl">⚡</div>
-      <h1 className="font-pixel text-2xl text-accent text-glow mb-4">
+      {/* Animated Pokeball */}
+      <div className="relative mb-8">
+        <div className="text-6xl animate-pokeball">●</div>
+        <div className="absolute inset-0 rounded-full bg-accent/10 blur-2xl" />
+      </div>
+
+      <h1 className="font-pixel text-2xl sm:text-3xl text-accent text-glow mb-4">
         PokéArena
       </h1>
-      <p className="font-pixel text-xs text-foreground/60 mb-8 max-w-md leading-relaxed">
-        Catch Gen 1-4 Pokémon. Build your team. Battle wild trainers.
+      <p className="font-pixel text-[10px] sm:text-xs text-foreground/50 mb-2 max-w-lg leading-loose">
+        Catch all 493 Gen I–IV Pokémon
+      </p>
+      <p className="font-pixel text-[10px] sm:text-xs text-foreground/50 mb-8 max-w-lg leading-loose">
+        Build a team of 6. Battle wild trainers.
       </p>
 
-      <div className="flex gap-4">
+      {/* Feature cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 max-w-2xl w-full">
+        <div className="pixel-border rounded-lg bg-surface p-4">
+          <p className="text-2xl mb-2">📖</p>
+          <p className="font-pixel text-[9px] text-accent mb-1">POKÉDEX</p>
+          <p className="text-xs text-foreground/50">Browse, search, and discover all 493 Pokémon</p>
+        </div>
+        <div className="pixel-border rounded-lg bg-surface p-4">
+          <p className="text-2xl mb-2">⚡</p>
+          <p className="font-pixel text-[9px] text-accent mb-1">COLLECT</p>
+          <p className="text-xs text-foreground/50">Catch Pokémon, nickname them, build your team</p>
+        </div>
+        <div className="pixel-border rounded-lg bg-surface p-4">
+          <p className="text-2xl mb-2">⚔️</p>
+          <p className="font-pixel text-[9px] text-accent mb-1">BATTLE</p>
+          <p className="text-xs text-foreground/50">Turn-based battles with type advantages</p>
+        </div>
+      </div>
+
+      {/* CTA buttons */}
+      <div className="flex flex-col sm:flex-row gap-3">
         <Link
           href="/pokedex"
           className="pixel-border rounded bg-surface px-6 py-3 text-sm font-semibold text-foreground hover:bg-surface-light transition-colors"
@@ -38,6 +66,10 @@ export default function Home() {
           </Link>
         </Show>
       </div>
+
+      <p className="mt-12 text-[10px] text-foreground/20 font-pixel">
+        MPCS 51238 · Assignment 3
+      </p>
     </div>
   );
 }
