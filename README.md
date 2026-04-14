@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PokéArena — Collect & Battle
+
+A full-stack Pokemon collection and battle app with a Nintendo DS-era aesthetic. Browse all 493 Gen I-IV Pokemon, catch them, build teams of 6, and battle wild trainers or challenge other players.
+
+Built for MPCS 51238 (Design, Build, Ship) — Assignment 3.
+
+## Stack
+
+- **Framework**: Next.js 16 (App Router) + TypeScript
+- **Styling**: Tailwind CSS v4
+- **Auth**: Clerk v7
+- **Database**: Supabase (PostgreSQL + RLS)
+- **External API**: PokeAPI
+- **Deployment**: Vercel
+
+## Features
+
+- **Pokedex** — Browse, search, and filter all 493 Pokemon with animated Gen V sprites
+- **Collection** — Catch Pokemon, nickname them, mark favorites, release
+- **Teams** — Build teams of 6 from your collection with type coverage analysis
+- **Battle** — Turn-based battles with type advantages, STAB, crits, and animated sprites
+- **Leaderboard** — Public rankings by wins, catches, or win rate
+- **Community Battles** — Challenge other trainers' teams from the leaderboard
+- **Profile** — Stats, win/loss record, battle history
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 20+
+- A [Clerk](https://clerk.com) app (for auth)
+- A [Supabase](https://supabase.com) project (for database)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/akothar0/dbs-assignment-3.git
+   cd dbs-assignment-3
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-## Learn More
+3. Create `.env.local` with your keys:
+   ```
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+   CLERK_SECRET_KEY=
+   NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+   NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+   NEXT_PUBLIC_SUPABASE_URL=
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+4. Set up the database by running the schema in `supabase/schema.sql` via the Supabase SQL editor.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Connect Clerk and Supabase via their respective dashboards (Clerk → "Connect with Supabase", Supabase → Auth → Third-Party Auth → Add Clerk).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+6. Run the dev server:
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000).
