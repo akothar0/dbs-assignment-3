@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { getPokemonDetail } from "@/lib/pokeapi/client";
+import { getPokemonDetail, getPokemonList } from "@/lib/pokeapi/client";
 import { toPokemonFull, formatPokemonName, formatStatName } from "@/lib/pokeapi/helpers";
 import { TypeBadge } from "@/components/ui/type-badge";
 import { CatchButton } from "@/components/collection/catch-button";
@@ -19,8 +19,15 @@ export default async function PokemonDetailPage({
     notFound();
   }
 
-  const raw = await getPokemonDetail(idNum);
-  const pokemon = toPokemonFull(raw);
+  const [raw, allPokemon] = await Promise.all([
+    getPokemonDetail(idNum),
+    getPokemonList(493, 0),
+  ]);
+  const pokemon = {
+    ...toPokemonFull(raw),
+    prevName: idNum > 1 ? allPokemon.pokemon.find((p) => p.id === idNum - 1)?.name ?? null : null,
+    nextName: idNum < 493 ? allPokemon.pokemon.find((p) => p.id === idNum + 1)?.name ?? null : null,
+  };
 
   // Check if the current user has caught this Pokemon
   let isCaught = false;
@@ -189,6 +196,9 @@ export default async function PokemonDetailPage({
               className="text-sm text-foreground/50 hover:text-accent transition-colors"
             >
               &larr; #{String(pokemon.id - 1).padStart(3, "0")}
+              {pokemon.prevName && (
+                <span className="hidden sm:inline"> {formatPokemonName(pokemon.prevName)}</span>
+              )}
             </Link>
           ) : (
             <span />
@@ -198,6 +208,9 @@ export default async function PokemonDetailPage({
               href={`/pokedex/${pokemon.id + 1}`}
               className="text-sm text-foreground/50 hover:text-accent transition-colors"
             >
+              {pokemon.nextName && (
+                <span className="hidden sm:inline">{formatPokemonName(pokemon.nextName)} </span>
+              )}
               #{String(pokemon.id + 1).padStart(3, "0")} &rarr;
             </Link>
           )}

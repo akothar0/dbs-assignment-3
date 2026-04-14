@@ -152,8 +152,12 @@ export default function CollectionPage() {
 
       {pokemon.length === 0 ? (
         <div className="py-16 text-center">
-          <p className="font-pixel text-xs text-foreground/50 mb-4">
+          <p className="text-4xl mb-4">🎒</p>
+          <p className="font-pixel text-xs text-foreground/50 mb-2">
             No Pokémon caught yet!
+          </p>
+          <p className="text-sm text-foreground/40 mb-6">
+            Head to the Pokédex and start your journey.
           </p>
           <Link
             href="/pokedex"
@@ -164,7 +168,7 @@ export default function CollectionPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {sorted.map((p) => (
+          {sorted.map((p: PokemonWithDetails) => (
             <div
               key={p.pokemon_id}
               className="pixel-border rounded-lg bg-surface p-3 relative group"
@@ -240,6 +244,17 @@ export default function CollectionPage() {
               </div>
             </div>
           ))}
+
+          {/* Catch more prompt */}
+          {pokemon.length < 6 && (
+            <Link
+              href="/pokedex"
+              className="pixel-border rounded-lg bg-surface p-3 flex flex-col items-center justify-center h-44 text-foreground/30 hover:text-accent hover:border-accent/30 transition-colors"
+            >
+              <span className="text-2xl mb-1">+</span>
+              <span className="font-pixel text-[9px]">Catch More</span>
+            </Link>
+          )}
         </div>
       )}
     </div>

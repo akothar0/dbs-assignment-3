@@ -132,13 +132,15 @@ export default function ProfilePage() {
         <div className="pixel-border rounded-lg bg-surface p-4 mb-6">
           <div className="flex justify-between text-xs text-foreground/60 mb-2">
             <span>Win Rate</span>
-            <span>{winRate}% ({totalBattles} battles)</span>
+            <span>{winRate}% ({totalBattles} {totalBattles === 1 ? "battle" : "battles"})</span>
           </div>
           <div className="h-3 bg-background rounded-full overflow-hidden">
-            <div
-              className="h-full bg-accent rounded-full hp-transition"
-              style={{ width: `${winRate === "—" ? 0 : winRate}%` }}
-            />
+            {Number(winRate) > 0 && (
+              <div
+                className="h-full bg-accent rounded-full hp-transition"
+                style={{ width: `${winRate}%`, minWidth: "8px" }}
+              />
+            )}
           </div>
         </div>
       )}

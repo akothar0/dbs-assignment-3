@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Show, UserButton } from "@clerk/nextjs";
 
 const navLinks = [
@@ -13,6 +14,14 @@ const navLinks = [
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  function linkClass(href: string) {
+    const active = pathname === href || pathname.startsWith(href + "/");
+    return `text-sm transition-colors ${
+      active ? "text-accent font-semibold" : "text-foreground/70 hover:text-accent"
+    }`;
+  }
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-surface/90 backdrop-blur-sm">
@@ -29,10 +38,7 @@ export function Navbar() {
           {navLinks.map((link) =>
             link.auth ? (
               <Show when="signed-in" key={link.href}>
-                <Link
-                  href={link.href}
-                  className="text-sm text-foreground/70 hover:text-accent transition-colors"
-                >
+                <Link href={link.href} className={linkClass(link.href)}>
                   {link.label}
                 </Link>
               </Show>
@@ -40,7 +46,7 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm text-foreground/70 hover:text-accent transition-colors"
+                className={linkClass(link.href)}
               >
                 {link.label}
               </Link>
@@ -57,10 +63,7 @@ export function Navbar() {
           </Show>
 
           <Show when="signed-in">
-            <Link
-              href="/profile"
-              className="text-sm text-foreground/70 hover:text-accent transition-colors"
-            >
+            <Link href="/profile" className={linkClass("/profile")}>
               Profile
             </Link>
             <UserButton
@@ -96,16 +99,24 @@ export function Navbar() {
         </button>
       </div>
 
+      {/* Mobile backdrop */}
+      {menuOpen && (
+        <div
+          className="sm:hidden fixed inset-0 top-16 z-40 bg-background/60 backdrop-blur-sm"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
+
       {/* Mobile dropdown */}
       {menuOpen && (
-        <div className="sm:hidden border-t border-border bg-surface px-4 py-3 space-y-2">
+        <div className="sm:hidden relative z-50 border-t border-border bg-surface px-4 py-3 space-y-2">
           {navLinks.map((link) =>
             link.auth ? (
               <Show when="signed-in" key={link.href}>
                 <Link
                   href={link.href}
                   onClick={() => setMenuOpen(false)}
-                  className="block py-2 text-sm text-foreground/70 hover:text-accent transition-colors"
+                  className={`block py-2 ${linkClass(link.href)}`}
                 >
                   {link.label}
                 </Link>
@@ -115,7 +126,7 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="block py-2 text-sm text-foreground/70 hover:text-accent transition-colors"
+                className={`block py-2 ${linkClass(link.href)}`}
               >
                 {link.label}
               </Link>
@@ -136,7 +147,7 @@ export function Navbar() {
             <Link
               href="/profile"
               onClick={() => setMenuOpen(false)}
-              className="block py-2 text-sm text-foreground/70 hover:text-accent transition-colors"
+              className={`block py-2 ${linkClass("/profile")}`}
             >
               Profile
             </Link>
