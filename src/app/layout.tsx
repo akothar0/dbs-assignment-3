@@ -56,6 +56,16 @@ export default function RootLayout({
                 color: "#e2e2e2",
               },
               card: { backgroundColor: "#1a1a2e", borderColor: "#2a2a4a" },
+              userButtonPopoverCard: {
+                backgroundColor: "#1a1a2e",
+                borderColor: "#2a2a4a",
+              },
+              userPreviewMainIdentifier: { color: "#e2e2e2" },
+              userPreviewSecondaryIdentifier: { color: "#a0a0b8" },
+              userButtonPopoverActionButton: { color: "#e2e2e2" },
+              userButtonPopoverActionButtonText: { color: "#e2e2e2" },
+              userButtonPopoverActionButtonIcon: { color: "#a0a0b8" },
+              userButtonPopoverFooter: { display: "none" },
             },
           }}
         >
