@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { BattleScene } from "@/components/battle/battle-scene";
 import { MoveSelector } from "@/components/battle/move-selector";
@@ -29,8 +30,12 @@ interface Team {
 
 type PagePhase = "team_select" | "loading" | "battle" | "result";
 
-export default function BattlePage() {
+function BattlePageInner() {
   const { isSignedIn } = useAuth();
+  const searchParams = useSearchParams();
+  const challengeTeamId = searchParams.get("challenge");
+  const challengeTrainerName = searchParams.get("trainer");
+
   const [phase, setPhase] = useState<PagePhase>("team_select");
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -39,6 +44,7 @@ export default function BattlePage() {
   const [opponentHit, setOpponentHit] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [resultSaved, setResultSaved] = useState(false);
+  const [trainerName, setTrainerName] = useState<string | null>(challengeTrainerName);
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -126,22 +132,33 @@ export default function BattlePage() {
     try {
       const teamSlots = getTeamSlots(team);
 
-      // Fetch player team data and generate opponent in parallel
+      // Fetch player team data and generate/challenge opponent in parallel
+      const opponentBody = challengeTeamId
+        ? { action: "challenge", challengeTeamId }
+        : { action: "generate", teamSize: Math.min(teamSlots.length, 3) };
+
       const [playerTeam, opponentRes] = await Promise.all([
         fetchPlayerTeam(team),
         fetch("/api/battle", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "generate",
-            teamSize: Math.min(teamSlots.length, 3),
-          }),
+          body: JSON.stringify(opponentBody),
         }),
       ]);
 
-      const { opponent } = await opponentRes.json();
+      const opponentData = await opponentRes.json();
+      if (!opponentRes.ok) {
+        throw new Error(opponentData.error ?? "Failed to load opponent");
+      }
+      const { opponent } = opponentData;
+      if (opponentData.trainerName) {
+        setTrainerName(opponentData.trainerName);
+      }
 
       const state = initBattleState(playerTeam, opponent);
+      if (challengeTeamId && trainerName) {
+        state.log[0] = { turn: 0, text: `You challenged ${trainerName}!`, type: "info" };
+      }
       state.phase = "player_turn";
       setBattleState(state);
       setPhase("battle");
@@ -219,9 +236,13 @@ export default function BattlePage() {
 
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="font-pixel text-lg text-accent mb-2">Battle Arena</h1>
+        <h1 className="font-pixel text-lg text-accent mb-2">
+          {challengeTeamId ? "Challenge Battle" : "Battle Arena"}
+        </h1>
         <p className="text-sm text-foreground/60 mb-6">
-          Choose a team to battle with. You&apos;ll face a wild trainer!
+          {challengeTeamId
+            ? `Choose your team to battle ${trainerName ?? "this trainer"}!`
+            : "Choose a team to battle with. You\u2019ll face a wild trainer!"}
         </p>
 
         {validTeams.length === 0 ? (
@@ -359,15 +380,24 @@ export default function BattlePage() {
                 {getAliveCount(battleState.playerTeam)} of your Pokémon survived
               </p>
               <div className="flex gap-3 justify-center">
-                <button
-                  onClick={() => {
-                    setPhase("team_select");
-                    setBattleState(null);
-                  }}
-                  className="rounded bg-surface px-4 py-2 text-sm text-foreground hover:bg-surface-light transition-colors"
-                >
-                  Back to Teams
-                </button>
+                {challengeTeamId ? (
+                  <Link
+                    href="/leaderboard"
+                    className="rounded bg-surface px-4 py-2 text-sm text-foreground hover:bg-surface-light transition-colors"
+                  >
+                    Back to Leaderboard
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setPhase("team_select");
+                      setBattleState(null);
+                    }}
+                    className="rounded bg-surface px-4 py-2 text-sm text-foreground hover:bg-surface-light transition-colors"
+                  >
+                    Back to Teams
+                  </button>
+                )}
                 <button
                   onClick={() => selectedTeam && startBattle(selectedTeam)}
                   className="rounded bg-accent px-4 py-2 text-sm font-semibold text-background hover:bg-accent-dim transition-colors"
@@ -394,4 +424,16 @@ export default function BattlePage() {
   }
 
   return null;
+}
+
+export default function BattlePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
+        <div className="animate-pokeball text-4xl">●</div>
+      </div>
+    }>
+      <BattlePageInner />
+    </Suspense>
+  );
 }

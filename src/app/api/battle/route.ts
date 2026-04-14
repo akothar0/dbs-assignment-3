@@ -5,86 +5,82 @@ import { toPokemonFull, getAnimatedSprite, getAnimatedBackSprite, getStaticSprit
 
 const MAX_POKEMON_ID = 493;
 
+// Hydrate a single Pokemon ID into a battle-ready object with moves
+async function buildBattlePokemon(id: number) {
+  const raw = await getPokemonDetail(id);
+  const pokemon = toPokemonFull(raw);
+
+  const allMoveNames = pokemon.moves.map((m) => m.name);
+  const moveDetails = await Promise.all(
+    allMoveNames.slice(0, 20).map(async (name) => {
+      try {
+        const res = await fetch(`https://pokeapi.co/api/v2/move/${name}`, {
+          next: { revalidate: 604800 },
+        });
+        if (!res.ok) return null;
+        return res.json();
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  const damagingMoves = moveDetails
+    .filter(
+      (m): m is NonNullable<typeof m> =>
+        m !== null &&
+        m.power > 0 &&
+        (m.damage_class.name === "physical" || m.damage_class.name === "special")
+    )
+    .map((m) => ({
+      name: m.name as string,
+      power: m.power as number,
+      type: m.type.name as string,
+      damageClass: m.damage_class.name as "physical" | "special",
+    }));
+
+  // Pick up to 4, preferring STAB moves
+  const stabMoves = damagingMoves.filter((m) =>
+    pokemon.types.includes(m.type)
+  );
+  const nonStabMoves = damagingMoves.filter(
+    (m) => !pokemon.types.includes(m.type)
+  );
+
+  const selected = [
+    ...stabMoves.slice(0, 2),
+    ...nonStabMoves.slice(0, 4 - Math.min(stabMoves.length, 2)),
+  ].slice(0, 4);
+
+  if (selected.length === 0) {
+    selected.push({
+      name: "tackle",
+      power: 40,
+      type: "normal",
+      damageClass: "physical",
+    });
+  }
+
+  return {
+    id: pokemon.id,
+    name: pokemon.name,
+    types: pokemon.types,
+    stats: pokemon.stats,
+    moves: selected,
+    maxHp: 0,
+    currentHp: 0,
+    sprite: getAnimatedSprite(pokemon.id) ?? getStaticSprite(pokemon.id),
+    backSprite: getAnimatedBackSprite(pokemon.id),
+  };
+}
+
 // Generate a random opponent team of 3-6 Pokemon
 async function generateOpponentTeam(size: number) {
   const ids = new Set<number>();
   while (ids.size < size) {
     ids.add(Math.floor(Math.random() * MAX_POKEMON_ID) + 1);
   }
-
-  const team = await Promise.all(
-    Array.from(ids).map(async (id) => {
-      const raw = await getPokemonDetail(id);
-      const pokemon = toPokemonFull(raw);
-
-      // Pick 4 damaging moves
-      const allMoveNames = pokemon.moves.map((m) => m.name);
-      const moveDetails = await Promise.all(
-        allMoveNames.slice(0, 20).map(async (name) => {
-          try {
-            const res = await fetch(`https://pokeapi.co/api/v2/move/${name}`, {
-              next: { revalidate: 604800 },
-            });
-            if (!res.ok) return null;
-            return res.json();
-          } catch {
-            return null;
-          }
-        })
-      );
-
-      const damagingMoves = moveDetails
-        .filter(
-          (m): m is NonNullable<typeof m> =>
-            m !== null &&
-            m.power > 0 &&
-            (m.damage_class.name === "physical" || m.damage_class.name === "special")
-        )
-        .map((m) => ({
-          name: m.name as string,
-          power: m.power as number,
-          type: m.type.name as string,
-          damageClass: m.damage_class.name as "physical" | "special",
-        }));
-
-      // Pick up to 4, preferring STAB moves
-      const stabMoves = damagingMoves.filter((m) =>
-        pokemon.types.includes(m.type)
-      );
-      const nonStabMoves = damagingMoves.filter(
-        (m) => !pokemon.types.includes(m.type)
-      );
-
-      const selected = [
-        ...stabMoves.slice(0, 2),
-        ...nonStabMoves.slice(0, 4 - Math.min(stabMoves.length, 2)),
-      ].slice(0, 4);
-
-      // Fallback: Tackle if no moves found
-      if (selected.length === 0) {
-        selected.push({
-          name: "tackle",
-          power: 40,
-          type: "normal",
-          damageClass: "physical",
-        });
-      }
-
-      return {
-        id: pokemon.id,
-        name: pokemon.name,
-        types: pokemon.types,
-        stats: pokemon.stats,
-        moves: selected,
-        maxHp: 0,
-        currentHp: 0,
-        sprite: getAnimatedSprite(pokemon.id) ?? getStaticSprite(pokemon.id),
-        backSprite: getAnimatedBackSprite(pokemon.id),
-      };
-    })
-  );
-
-  return team;
+  return Promise.all(Array.from(ids).map(buildBattlePokemon));
 }
 
 export async function POST(request: Request) {
@@ -147,6 +143,43 @@ export async function POST(request: Request) {
     }
 
     return Response.json(data, { status: 201 });
+  }
+
+  if (action === "challenge") {
+    const { challengeTeamId } = body;
+    if (!challengeTeamId) {
+      return Response.json({ error: "Missing challengeTeamId" }, { status: 400 });
+    }
+
+    const supabase = await createClient();
+    const { data: team } = await supabase
+      .from("teams")
+      .select("*")
+      .eq("id", challengeTeamId)
+      .single();
+
+    if (!team) {
+      return Response.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    const slots = [team.slot_1, team.slot_2, team.slot_3, team.slot_4, team.slot_5, team.slot_6]
+      .filter((s): s is number => s !== null);
+
+    if (slots.length === 0) {
+      return Response.json({ error: "Team is empty" }, { status: 400 });
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", team.user_id)
+      .single();
+
+    const opponent = await Promise.all(slots.map(buildBattlePokemon));
+    return Response.json({
+      opponent,
+      trainerName: profile?.display_name ?? "Trainer",
+    });
   }
 
   return Response.json({ error: "Invalid action" }, { status: 400 });

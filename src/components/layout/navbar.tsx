@@ -7,6 +7,7 @@ import { Show, UserButton } from "@clerk/nextjs";
 
 const navLinks = [
   { href: "/pokedex", label: "Pokédex" },
+  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/collection", label: "Collection", auth: true },
   { href: "/teams", label: "Teams", auth: true },
   { href: "/battle", label: "Battle", auth: true },
