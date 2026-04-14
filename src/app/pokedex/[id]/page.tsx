@@ -135,11 +135,11 @@ export default async function PokemonDetailPage({
                       style={{
                         width: `${(stat.value / maxStat) * 100}%`,
                         backgroundColor:
-                          stat.value >= 100
+                          stat.value >= 90
                             ? "#44ff44"
-                            : stat.value >= 60
+                            : stat.value >= 50
                             ? "#ffd700"
-                            : "#ff4444",
+                            : "#ff6644",
                       }}
                     />
                   </div>

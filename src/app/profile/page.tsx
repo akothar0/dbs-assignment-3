@@ -143,6 +143,46 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Battle History */}
+      {battles.length > 0 && (
+        <div className="mb-6">
+          <h2 className="font-pixel text-xs text-foreground/50 mb-3">
+            Recent Battles
+          </h2>
+          <div className="space-y-2">
+            {battles.slice(0, 10).map((b) => (
+              <div
+                key={b.id}
+                className="pixel-border rounded-lg bg-surface px-4 py-3 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`font-pixel text-[10px] px-2 py-1 rounded ${
+                      b.result === "win"
+                        ? "bg-success/10 text-success"
+                        : "bg-danger/10 text-danger"
+                    }`}
+                  >
+                    {b.result === "win" ? "WIN" : "LOSS"}
+                  </span>
+                  <span className="text-xs text-foreground/60">
+                    vs {b.opponent_pokemon_ids.length} Pokémon
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-foreground/40">
+                    {b.user_remaining} survived
+                  </span>
+                  <p className="text-[10px] text-foreground/30">
+                    {new Date(b.battled_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Quick links */}
       <div className="grid grid-cols-3 gap-3">
         <Link

@@ -51,6 +51,13 @@ body {
   transition: width 0.8s ease-in-out, background-color 0.8s ease-in-out;
 }
 
+/* Pixel-art sprite rendering */
+.image-rendering-pixelated {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
 /* Sprite shake on hit */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }

@@ -22,21 +22,21 @@ export default function Home() {
 
       {/* Feature cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 max-w-2xl w-full">
-        <div className="pixel-border rounded-lg bg-surface p-4">
+        <Link href="/pokedex" className="pixel-border rounded-lg bg-surface p-4 hover:bg-surface-light transition-colors">
           <p className="text-2xl mb-2">📖</p>
           <p className="font-pixel text-[9px] text-accent mb-1">POKÉDEX</p>
           <p className="text-xs text-foreground/50">Browse, search, and discover all 493 Pokémon</p>
-        </div>
-        <div className="pixel-border rounded-lg bg-surface p-4">
+        </Link>
+        <Link href="/collection" className="pixel-border rounded-lg bg-surface p-4 hover:bg-surface-light transition-colors">
           <p className="text-2xl mb-2">⚡</p>
           <p className="font-pixel text-[9px] text-accent mb-1">COLLECT</p>
           <p className="text-xs text-foreground/50">Catch Pokémon, nickname them, build your team</p>
-        </div>
-        <div className="pixel-border rounded-lg bg-surface p-4">
+        </Link>
+        <Link href="/battle" className="pixel-border rounded-lg bg-surface p-4 hover:bg-surface-light transition-colors">
           <p className="text-2xl mb-2">⚔️</p>
           <p className="font-pixel text-[9px] text-accent mb-1">BATTLE</p>
           <p className="text-xs text-foreground/50">Turn-based battles with type advantages</p>
-        </div>
+        </Link>
       </div>
 
       {/* CTA buttons */}

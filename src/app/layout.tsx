@@ -38,8 +38,24 @@ export default function RootLayout({
               colorPrimary: "#ffd700",
               colorBackground: "#1a1a2e",
               colorText: "#e2e2e2",
+              colorTextOnPrimaryBackground: "#0f0f23",
+              colorTextSecondary: "#a0a0b8",
               colorInputBackground: "#25253e",
               colorInputText: "#e2e2e2",
+              colorNeutral: "#e2e2e2",
+            },
+            elements: {
+              headerTitle: { color: "#e2e2e2" },
+              headerSubtitle: { color: "#a0a0b8" },
+              formFieldLabel: { color: "#e2e2e2" },
+              dividerText: { color: "#a0a0b8" },
+              footerActionText: { color: "#a0a0b8" },
+              footerActionLink: { color: "#ffd700" },
+              socialButtonsBlockButton: {
+                borderColor: "#2a2a4a",
+                color: "#e2e2e2",
+              },
+              card: { backgroundColor: "#1a1a2e", borderColor: "#2a2a4a" },
             },
           }}
         >
