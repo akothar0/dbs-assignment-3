@@ -1,26 +1,106 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0f0f23;
+  --foreground: #e2e2e2;
+  --surface: #1a1a2e;
+  --surface-light: #25253e;
+  --border: #2a2a4a;
+  --accent: #ffd700;
+  --accent-dim: #b8960f;
+  --danger: #ff4444;
+  --success: #44ff44;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-surface: var(--surface);
+  --color-surface-light: var(--surface-light);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-pixel: 'Press Start 2P', monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Pixel border utility — mimics DS-era UI chrome */
+.pixel-border {
+  box-shadow:
+    inset 2px 2px 0 var(--border),
+    inset -2px -2px 0 var(--border),
+    2px 2px 0 var(--border),
+    -2px -2px 0 var(--border);
+}
+
+/* Retro text glow */
+.text-glow {
+  text-shadow: 0 0 10px var(--accent), 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+/* HP bar animation */
+.hp-transition {
+  transition: width 0.8s ease-in-out, background-color 0.8s ease-in-out;
+}
+
+/* Sprite shake on hit */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Flash on super effective */
+@keyframes flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+.animate-flash {
+  animation: flash 0.2s ease-in-out 2;
+}
+
+/* Pokeball spin */
+@keyframes spin-wobble {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(15deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-15deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.animate-pokeball {
+  animation: spin-wobble 0.6s ease-in-out infinite;
+}
+
+/* Scrollbar styling for retro feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dim);
 }
