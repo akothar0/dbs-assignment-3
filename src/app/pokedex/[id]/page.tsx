@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { getPokemonDetail } from "@/lib/pokeapi/client";
 import { toPokemonFull, formatPokemonName, formatStatName } from "@/lib/pokeapi/helpers";
 import { TypeBadge } from "@/components/ui/type-badge";
+import { CatchButton } from "@/components/collection/catch-button";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function PokemonDetailPage({
   params,
@@ -18,6 +21,24 @@ export default async function PokemonDetailPage({
 
   const raw = await getPokemonDetail(idNum);
   const pokemon = toPokemonFull(raw);
+
+  // Check if the current user has caught this Pokemon
+  let isCaught = false;
+  const { userId } = await auth();
+  if (userId) {
+    try {
+      const supabase = await createClient();
+      const { data } = await supabase
+        .from("collected_pokemon")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("pokemon_id", idNum)
+        .maybeSingle();
+      isCaught = !!data;
+    } catch {
+      // Supabase not configured yet — ignore
+    }
+  }
 
   const maxStat = 255; // Theoretical max base stat
 
@@ -83,6 +104,14 @@ export default async function PokemonDetailPage({
                   </span>
                 ))}
               </div>
+            </div>
+
+            <div className="mt-4">
+              <CatchButton
+                pokemonId={pokemon.id}
+                pokemonName={formatPokemonName(pokemon.name)}
+                isCaught={isCaught}
+              />
             </div>
           </div>
 
