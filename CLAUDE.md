@@ -54,6 +54,13 @@ Users browse Gen 1-4 Pokemon (493 total) via the PokeAPI, catch them to build a 
 - `battle_log` JSONB
 - `battled_at` TIMESTAMPTZ
 
+### badges
+- `id` UUID PK
+- `user_id` TEXT NOT NULL
+- `gym_id` TEXT NOT NULL — gym leader ID (e.g., "rock", "water")
+- `earned_at` TIMESTAMPTZ
+- UNIQUE(user_id, gym_id)
+
 All tables use RLS with `auth.jwt()->>'sub'` matching `user_id`.
 
 ## Architecture Decisions
@@ -85,6 +92,27 @@ Deliberately excluded to keep scope manageable:
 - PP tracking (unlimited uses)
 - Mid-battle switching (auto-switch on faint)
 
+## Gym Leader System
+
+8 type-themed gym leaders with curated teams scaling in difficulty (3-6 Pokemon):
+1. Brock (Rock), 2. Misty (Water), 3. Lt. Surge (Electric), 4. Gardenia (Grass)
+5. Flannery (Fire), 6. Sabrina (Psychic), 7. Candice (Ice), 8. Clair (Dragon)
+
+- Static data in `src/lib/gyms/gym-data.ts` (not DB)
+- Gym battles via `/battle?gym={id}` — reuses existing battle engine
+- Badges stored in `badges` table, awarded on win via upsert
+- Badge showcase on `/gyms` page and `/profile` page
+- Gym page at `/gyms` with challenge buttons, difficulty stars, team previews
+
+## UX Patterns
+
+- **Two-step confirm** for destructive actions: first click shows "Confirm?", auto-resets after 3s
+  - Team delete (teams list page)
+  - Pokemon release (collection page + catch-button)
+- **Inline save feedback**: "Team saved!" message next to Save button, auto-clears after 2.5s
+- **Catch celebration**: "Gotcha! {name} was caught!" message on successful catch
+- **Favorites**: Star toggle on collection, favorites filter button, favorites sorted first in team picker
+
 ## File Structure
 
 ```
@@ -98,12 +126,13 @@ src/
 │   ├── pokedex/
 │   │   ├── page.tsx                  — Browse/search grid with pagination
 │   │   └── [id]/page.tsx             — Pokemon detail (stats, moves, catch)
-│   ├── collection/page.tsx           — User's caught Pokemon (sort, nickname, release)
+│   ├── collection/page.tsx           — User's caught Pokemon (sort, favorites filter, nickname, release)
 │   ├── teams/
 │   │   ├── page.tsx                  — List user's teams
-│   │   └── [id]/page.tsx             — Team editor (6-slot picker from collection)
-│   ├── battle/page.tsx               — Team select → battle → result
-│   ├── profile/page.tsx              — Stats, win/loss, battle history
+│   │   └── [id]/page.tsx             — Team editor (6-slot picker, favorites first)
+│   ├── battle/page.tsx               — Team select → battle → result (supports wild/gym/challenge modes)
+│   ├── gyms/page.tsx                 — 8 gym leaders with badge showcase
+│   ├── profile/page.tsx              — Stats, win/loss, gym badges, battle history
 │   └── api/
 │       ├── pokemon/
 │       │   ├── route.ts              — GET list with pagination/search
@@ -112,8 +141,9 @@ src/
 │       ├── collection/route.ts       — GET/POST/PATCH/DELETE user collection
 │       ├── teams/route.ts            — GET/POST/PUT/DELETE user teams
 │       ├── battle/
-│       │   ├── route.ts              — POST generate opponent / save result
+│       │   ├── route.ts              — POST generate/gym/challenge/save actions
 │       │   └── history/route.ts      — GET user's battle history
+│       ├── badges/route.ts           — GET user's earned gym badges
 │       └── profile/route.ts          — GET/POST profile with auto-create
 ├── components/
 │   ├── ui/
@@ -141,10 +171,12 @@ src/
     ├── supabase/
     │   ├── client.ts                 — Browser client with Clerk token
     │   └── server.ts                 — Server client with Clerk token
-    └── battle/
-        ├── engine.ts                 — Battle state machine + turn resolution
-        ├── type-chart.ts             — 18x18 type effectiveness map
-        └── damage.ts                 — Damage formula
+    ├── battle/
+    │   ├── engine.ts                 — Battle state machine + turn resolution
+    │   ├── type-chart.ts             — 18x18 type effectiveness map
+    │   └── damage.ts                 — Damage formula
+    └── gyms/
+        └── gym-data.ts               — Static gym leader definitions + getGymLeader()
 ```
 
 ## Style Preferences
@@ -167,3 +199,23 @@ NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
+
+## Next Planned Feature: Wild Encounter Catch System + Starter Pokemon
+
+The detailed implementation plan is at `.claude/plans/ethereal-bubbling-riddle.md`.
+
+**Summary:** Replace the current instant-catch mechanic with a "weaken then catch" wild encounter system (like the real Pokemon games). Add starter Pokemon onboarding so new users begin with one Pokemon.
+
+Key changes:
+- New `/starter` page: choose from Bulbasaur/Charmander/Squirtle on first sign-in
+- `profiles.has_starter` boolean column (new DB migration needed)
+- Pokedex "Catch" button becomes "Encounter" → starts 1v1 wild battle at `/battle?encounter={id}`
+- During encounter: 4 moves + "Throw Ball" button with catch probability display
+- Catch formula: `((3*maxHp - 2*currentHp) / (3*maxHp)) * (captureRate / 255)` — server-side roll
+- New `getPokemonSpecies()` in PokeAPI client for `capture_rate` field (0-255)
+- New `src/lib/battle/catch.ts` for catch probability + roll functions
+- New `executeWildAttack()` in battle engine (opponent free attack on failed catch)
+- New battle API actions: `encounter`, `catch_attempt`
+- Wild Pokemon fainting = missed catch opportunity
+
+Supabase project ID: `cqibgfrhiajjqkckuutv`

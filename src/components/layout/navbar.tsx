@@ -10,6 +10,7 @@ const navLinks = [
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/collection", label: "Collection", auth: true },
   { href: "/teams", label: "Teams", auth: true },
+  { href: "/gyms", label: "Gyms", auth: true },
   { href: "/battle", label: "Battle", auth: true },
 ];
 

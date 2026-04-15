@@ -21,7 +21,7 @@ export default function Home() {
       </p>
 
       {/* Feature cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 max-w-3xl w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 max-w-4xl w-full">
         <Link href="/pokedex" className="pixel-border rounded-lg bg-surface p-4 hover:bg-surface-light transition-colors">
           <p className="text-2xl mb-2">📖</p>
           <p className="font-pixel text-[9px] text-accent mb-1">POKÉDEX</p>
@@ -36,6 +36,11 @@ export default function Home() {
           <p className="text-2xl mb-2">⚔️</p>
           <p className="font-pixel text-[9px] text-accent mb-1">BATTLE</p>
           <p className="text-xs text-foreground/50">Turn-based battles with type advantages</p>
+        </Link>
+        <Link href="/gyms" className="pixel-border rounded-lg bg-surface p-4 hover:bg-surface-light transition-colors">
+          <p className="text-2xl mb-2">🏟️</p>
+          <p className="font-pixel text-[9px] text-accent mb-1">GYM CHALLENGE</p>
+          <p className="text-xs text-foreground/50">Battle 8 Gym Leaders and earn all badges</p>
         </Link>
         <Link href="/leaderboard" className="pixel-border rounded-lg bg-surface p-4 hover:bg-surface-light transition-colors">
           <p className="text-2xl mb-2">🏆</p>

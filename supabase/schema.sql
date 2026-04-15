@@ -123,3 +123,25 @@ CREATE POLICY "Anyone can read battle records"
 CREATE POLICY "Users can insert own battle records"
   ON battle_records FOR INSERT
   WITH CHECK (user_id = (auth.jwt()->>'sub'));
+
+-- ============================================================
+-- Table: badges
+-- Tracks gym badges earned by users
+-- ============================================================
+CREATE TABLE badges (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  gym_id TEXT NOT NULL,
+  earned_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user_id, gym_id)
+);
+
+ALTER TABLE badges ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read badges"
+  ON badges FOR SELECT
+  USING (true);
+
+CREATE POLICY "Users can insert own badges"
+  ON badges FOR INSERT
+  WITH CHECK (user_id = (auth.jwt()->>'sub'));

@@ -94,6 +94,16 @@ body {
   animation: spin-wobble 0.6s ease-in-out infinite;
 }
 
+/* Badge glow for earned gym badges */
+@keyframes badge-glow {
+  0%, 100% { box-shadow: 0 0 4px currentColor; }
+  50% { box-shadow: 0 0 12px currentColor, 0 0 20px currentColor; }
+}
+
+.animate-badge-glow {
+  animation: badge-glow 2s ease-in-out infinite;
+}
+
 /* Scrollbar styling for retro feel */
 ::-webkit-scrollbar {
   width: 8px;

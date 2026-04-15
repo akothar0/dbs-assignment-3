@@ -28,8 +28,10 @@ export default function CollectionPage() {
   const [pokemon, setPokemon] = useState<PokemonWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortBy>("caught_at");
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [editingNickname, setEditingNickname] = useState<number | null>(null);
   const [nicknameValue, setNicknameValue] = useState("");
+  const [confirmRelease, setConfirmRelease] = useState<number | null>(null);
 
   const fetchCollection = useCallback(async () => {
     try {
@@ -63,7 +65,13 @@ export default function CollectionPage() {
     }
   }, [isSignedIn, fetchCollection]);
 
-  const sorted = [...pokemon].sort((a, b) => {
+  const filtered = showFavoritesOnly
+    ? pokemon.filter((p) => p.is_favorite)
+    : pokemon;
+
+  const sorted = [...filtered].sort((a, b) => {
+    // Favorites always first
+    if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
     if (sortBy === "caught_at") {
       return new Date(b.caught_at).getTime() - new Date(a.caught_at).getTime();
     }
@@ -72,12 +80,18 @@ export default function CollectionPage() {
   });
 
   async function handleRelease(pokemonId: number) {
+    if (confirmRelease !== pokemonId) {
+      setConfirmRelease(pokemonId);
+      setTimeout(() => setConfirmRelease(null), 3000);
+      return;
+    }
     const res = await fetch(`/api/collection?pokemon_id=${pokemonId}`, {
       method: "DELETE",
     });
     if (res.ok) {
       setPokemon((prev) => prev.filter((p) => p.pokemon_id !== pokemonId));
     }
+    setConfirmRelease(null);
   }
 
   async function handleToggleFavorite(pokemonId: number, current: boolean) {
@@ -139,15 +153,27 @@ export default function CollectionPage() {
           </p>
         </div>
 
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortBy)}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
-        >
-          <option value="caught_at">Recently Caught</option>
-          <option value="pokemon_id">Pokédex #</option>
-          <option value="name">Name</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+              showFavoritesOnly
+                ? "border-accent bg-accent/10 text-accent"
+                : "border-border bg-surface text-foreground/50 hover:text-accent"
+            }`}
+          >
+            ★ Favorites
+          </button>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortBy)}
+            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
+          >
+            <option value="caught_at">Recently Caught</option>
+            <option value="pokemon_id">Pokédex #</option>
+            <option value="name">Name</option>
+          </select>
+        </div>
       </div>
 
       {pokemon.length === 0 ? (
@@ -185,10 +211,14 @@ export default function CollectionPage() {
               {/* Release button */}
               <button
                 onClick={() => handleRelease(p.pokemon_id)}
-                className="absolute top-2 right-2 text-xs text-danger/50 hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className={`absolute top-2 right-2 text-xs z-10 transition-all ${
+                  confirmRelease === p.pokemon_id
+                    ? "opacity-100 bg-danger/20 text-danger px-1.5 py-0.5 rounded font-pixel text-[8px]"
+                    : "text-danger/50 hover:text-danger opacity-0 group-hover:opacity-100"
+                }`}
                 title="Release"
               >
-                ✕
+                {confirmRelease === p.pokemon_id ? "Sure?" : "✕"}
               </button>
 
               <Link href={`/pokedex/${p.pokemon_id}`} className="flex flex-col items-center">

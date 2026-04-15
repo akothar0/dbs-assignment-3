@@ -16,6 +16,7 @@ import {
   type BattlePokemon,
 } from "@/lib/battle/engine";
 import { getAnimatedSprite, getAnimatedBackSprite, getStaticSprite, formatPokemonName } from "@/lib/pokeapi/helpers";
+import { getGymLeader } from "@/lib/gyms/gym-data";
 
 interface Team {
   id: string;
@@ -35,6 +36,8 @@ function BattlePageInner() {
   const searchParams = useSearchParams();
   const challengeTeamId = searchParams.get("challenge");
   const challengeTrainerName = searchParams.get("trainer");
+  const gymId = searchParams.get("gym");
+  const gymLeader = gymId ? getGymLeader(gymId) : null;
 
   const [phase, setPhase] = useState<PagePhase>("team_select");
   const [teams, setTeams] = useState<Team[]>([]);
@@ -133,7 +136,9 @@ function BattlePageInner() {
       const teamSlots = getTeamSlots(team);
 
       // Fetch player team data and generate/challenge opponent in parallel
-      const opponentBody = challengeTeamId
+      const opponentBody = gymId
+        ? { action: "gym", gymId }
+        : challengeTeamId
         ? { action: "challenge", challengeTeamId }
         : { action: "generate", teamSize: Math.min(teamSlots.length, 3) };
 
@@ -156,7 +161,9 @@ function BattlePageInner() {
       }
 
       const state = initBattleState(playerTeam, opponent);
-      if (challengeTeamId && trainerName) {
+      if (gymLeader) {
+        state.log[0] = { turn: 0, text: `Gym Leader ${gymLeader.name} wants to battle!`, type: "info" };
+      } else if (challengeTeamId && trainerName) {
         state.log[0] = { turn: 0, text: `You challenged ${trainerName}!`, type: "info" };
       }
       state.phase = "player_turn";
@@ -222,6 +229,7 @@ function BattlePageInner() {
         userRemaining: getAliveCount(state.playerTeam),
         opponentRemaining: getAliveCount(state.opponentTeam),
         battleLog: state.log.slice(-20),
+        gymId: gymId ?? undefined,
       }),
     });
 
@@ -237,10 +245,12 @@ function BattlePageInner() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
         <h1 className="font-pixel text-lg text-accent mb-2">
-          {challengeTeamId ? "Challenge Battle" : "Battle Arena"}
+          {gymLeader ? `Gym Battle: ${gymLeader.name}` : challengeTeamId ? "Challenge Battle" : "Battle Arena"}
         </h1>
         <p className="text-sm text-foreground/60 mb-6">
-          {challengeTeamId
+          {gymLeader
+            ? `"${gymLeader.quote}"`
+            : challengeTeamId
             ? `Choose your team to battle ${trainerName ?? "this trainer"}!`
             : "Choose a team to battle with. You\u2019ll face a wild trainer!"}
         </p>
@@ -376,11 +386,23 @@ function BattlePageInner() {
               >
                 {battleState.result === "win" ? "VICTORY!" : "DEFEAT"}
               </h2>
+              {gymLeader && battleState.result === "win" && (
+                <p className="font-pixel text-xs text-accent mb-2">
+                  You earned the {gymLeader.badgeName}! {gymLeader.badgeEmoji}
+                </p>
+              )}
               <p className="text-sm text-foreground/60 mb-4">
                 {getAliveCount(battleState.playerTeam)} of your Pokémon survived
               </p>
               <div className="flex gap-3 justify-center">
-                {challengeTeamId ? (
+                {gymId ? (
+                  <Link
+                    href="/gyms"
+                    className="rounded bg-surface px-4 py-2 text-sm text-foreground hover:bg-surface-light transition-colors"
+                  >
+                    Back to Gyms
+                  </Link>
+                ) : challengeTeamId ? (
                   <Link
                     href="/leaderboard"
                     className="rounded bg-surface px-4 py-2 text-sm text-foreground hover:bg-surface-light transition-colors"

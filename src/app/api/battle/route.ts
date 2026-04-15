@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
 import { getPokemonDetail } from "@/lib/pokeapi/client";
 import { toPokemonFull, getAnimatedSprite, getAnimatedBackSprite, getStaticSprite } from "@/lib/pokeapi/helpers";
+import { getGymLeader } from "@/lib/gyms/gym-data";
 
 const MAX_POKEMON_ID = 493;
 
@@ -142,7 +143,40 @@ export async function POST(request: Request) {
       // Non-critical
     }
 
+    // Award gym badge on win
+    if (result === "win" && body.gymId) {
+      try {
+        await supabase
+          .from("badges")
+          .upsert(
+            { user_id: userId, gym_id: body.gymId },
+            { onConflict: "user_id,gym_id" }
+          );
+      } catch {
+        // Non-critical — badge may already exist
+      }
+    }
+
     return Response.json(data, { status: 201 });
+  }
+
+  if (action === "gym") {
+    const { gymId } = body;
+    if (!gymId) {
+      return Response.json({ error: "Missing gymId" }, { status: 400 });
+    }
+
+    const gym = getGymLeader(gymId);
+    if (!gym) {
+      return Response.json({ error: "Gym not found" }, { status: 404 });
+    }
+
+    const opponent = await Promise.all(gym.team.map(buildBattlePokemon));
+    return Response.json({
+      opponent,
+      trainerName: gym.name,
+      gymId: gym.id,
+    });
   }
 
   if (action === "challenge") {

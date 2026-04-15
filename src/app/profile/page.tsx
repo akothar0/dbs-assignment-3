@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
+import { GYM_LEADERS } from "@/lib/gyms/gym-data";
+import { TYPE_COLORS } from "@/lib/pokeapi/helpers";
 
 interface Profile {
   display_name: string;
@@ -26,15 +28,17 @@ export default function ProfilePage() {
   const { user } = useUser();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [battles, setBattles] = useState<BattleRecord[]>([]);
+  const [badges, setBadges] = useState<{ gym_id: string; earned_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isSignedIn) return;
 
     async function load() {
-      const [profileRes, battleRes] = await Promise.all([
+      const [profileRes, battleRes, badgeRes] = await Promise.all([
         fetch("/api/profile"),
         fetch("/api/battle/history").catch(() => null),
+        fetch("/api/badges").catch(() => null),
       ]);
 
       if (profileRes.ok) {
@@ -43,6 +47,10 @@ export default function ProfilePage() {
 
       if (battleRes?.ok) {
         setBattles(await battleRes.json());
+      }
+
+      if (badgeRes?.ok) {
+        setBadges(await badgeRes.json());
       }
 
       setLoading(false);
@@ -144,6 +152,41 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Gym Badges */}
+      <div className="pixel-border rounded-lg bg-surface p-4 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-pixel text-xs text-foreground/50">Gym Badges</h2>
+          <span className="font-pixel text-[10px] text-accent">
+            {badges.length}/8
+          </span>
+        </div>
+        <div className="flex justify-center gap-3">
+          {GYM_LEADERS.map((gym) => {
+            const earned = badges.some((b) => b.gym_id === gym.id);
+            const color = TYPE_COLORS[gym.type] ?? "#888";
+            return earned ? (
+              <div
+                key={gym.id}
+                className="w-9 h-9 rounded-full flex items-center justify-center text-base animate-badge-glow"
+                style={{ backgroundColor: `${color}30`, color }}
+                title={`${gym.badgeName} — earned`}
+              >
+                {gym.badgeEmoji}
+              </div>
+            ) : (
+              <Link
+                key={gym.id}
+                href="/gyms"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-sm bg-foreground/10 opacity-40 hover:opacity-60 transition-opacity"
+                title="???"
+              >
+                ?
+              </Link>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Battle History */}
       {battles.length > 0 && (

@@ -22,6 +22,7 @@ interface Team {
 interface CollectedPokemon {
   pokemon_id: number;
   nickname: string | null;
+  is_favorite: boolean;
 }
 
 interface PokemonData {
@@ -41,6 +42,7 @@ export default function TeamEditorPage() {
   const [pokemonCache, setPokemonCache] = useState<Record<number, PokemonData>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [teamName, setTeamName] = useState("");
   const [selectingSlot, setSelectingSlot] = useState<number | null>(null);
 
@@ -126,6 +128,11 @@ export default function TeamEditorPage() {
     if (res.ok) {
       const updated = await res.json();
       setTeam(updated);
+      setSaveMessage("Team saved!");
+      setTimeout(() => setSaveMessage(null), 2500);
+    } else {
+      setSaveMessage("Failed to save");
+      setTimeout(() => setSaveMessage(null), 2500);
     }
     setSaving(false);
   }
@@ -192,6 +199,11 @@ export default function TeamEditorPage() {
           {saving ? "Saving..." : "Save"}
         </button>
         <span className="text-xs text-foreground/40">{filledCount} / 6</span>
+        {saveMessage && (
+          <span className={`font-pixel text-[10px] ${saveMessage.includes("Failed") ? "text-danger" : "text-success"}`}>
+            {saveMessage}
+          </span>
+        )}
       </div>
 
       {/* Team slots */}
@@ -262,6 +274,10 @@ export default function TeamEditorPage() {
               <div className="grid grid-cols-3 gap-2">
                 {collection
                   .filter((c) => !teamPokemonIds.has(c.pokemon_id))
+                  .sort((a, b) => {
+                    if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
+                    return a.pokemon_id - b.pokemon_id;
+                  })
                   .map((c) => {
                     const data = pokemonCache[c.pokemon_id];
                     if (!data) return null;
@@ -272,8 +288,11 @@ export default function TeamEditorPage() {
                           setSlotValue(selectingSlot, c.pokemon_id);
                           setSelectingSlot(null);
                         }}
-                        className="flex flex-col items-center rounded-lg bg-background p-2 hover:bg-surface-light transition-colors"
+                        className="relative flex flex-col items-center rounded-lg bg-background p-2 hover:bg-surface-light transition-colors"
                       >
+                        {c.is_favorite && (
+                          <span className="absolute top-1 right-1 text-[10px] text-accent">★</span>
+                        )}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={getSprite(c.pokemon_id)}

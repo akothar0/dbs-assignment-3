@@ -16,6 +16,8 @@ export function CatchButton({ pokemonId, pokemonName, isCaught: initialCaught = 
   const [isCaught, setIsCaught] = useState(initialCaught);
   const [isLoading, setIsLoading] = useState(false);
   const [showAnimation, setShowAnimation] = useState(false);
+  const [confirmRelease, setConfirmRelease] = useState(false);
+  const [showCaughtMessage, setShowCaughtMessage] = useState(false);
 
   async function handleCatch() {
     if (!isSignedIn) {
@@ -37,6 +39,8 @@ export function CatchButton({ pokemonId, pokemonName, isCaught: initialCaught = 
 
       if (res.ok) {
         setIsCaught(true);
+        setShowCaughtMessage(true);
+        setTimeout(() => setShowCaughtMessage(false), 3000);
       } else if (res.status === 409) {
         setIsCaught(true); // Already caught
       }
@@ -49,7 +53,14 @@ export function CatchButton({ pokemonId, pokemonName, isCaught: initialCaught = 
   async function handleRelease() {
     if (!isCaught) return;
 
+    if (!confirmRelease) {
+      setConfirmRelease(true);
+      setTimeout(() => setConfirmRelease(false), 3000);
+      return;
+    }
+
     setIsLoading(true);
+    setConfirmRelease(false);
     try {
       const res = await fetch(`/api/collection?pokemon_id=${pokemonId}`, {
         method: "DELETE",
@@ -65,15 +76,25 @@ export function CatchButton({ pokemonId, pokemonName, isCaught: initialCaught = 
   if (isCaught) {
     return (
       <div className="flex items-center gap-3">
-        <span className="inline-flex items-center gap-1.5 rounded bg-success/10 px-3 py-2 text-sm font-semibold text-success">
-          <span className="text-base">✓</span> In Collection
-        </span>
+        {showCaughtMessage ? (
+          <span className="inline-flex items-center gap-1.5 rounded bg-success/10 px-3 py-2 text-sm font-semibold text-success">
+            <span className="text-base">✓</span> Gotcha! {pokemonName} was caught!
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 rounded bg-success/10 px-3 py-2 text-sm font-semibold text-success">
+            <span className="text-base">✓</span> In Collection
+          </span>
+        )}
         <button
           onClick={handleRelease}
           disabled={isLoading}
-          className="rounded bg-danger/10 px-3 py-2 text-sm text-danger hover:bg-danger/20 transition-colors disabled:opacity-50"
+          className={`rounded px-3 py-2 text-sm transition-colors disabled:opacity-50 ${
+            confirmRelease
+              ? "bg-danger/30 text-danger font-semibold"
+              : "bg-danger/10 text-danger hover:bg-danger/20"
+          }`}
         >
-          Release
+          {confirmRelease ? "Confirm Release?" : "Release"}
         </button>
       </div>
     );

@@ -22,6 +22,7 @@ export default function TeamsPage() {
   const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -44,10 +45,16 @@ export default function TeamsPage() {
   }
 
   async function handleDelete(teamId: string) {
+    if (confirmDelete !== teamId) {
+      setConfirmDelete(teamId);
+      setTimeout(() => setConfirmDelete(null), 3000);
+      return;
+    }
     const res = await fetch(`/api/teams?id=${teamId}`, { method: "DELETE" });
     if (res.ok) {
       setTeams((prev) => prev.filter((t) => t.id !== teamId));
     }
+    setConfirmDelete(null);
   }
 
   function getSlots(team: Team): (number | null)[] {
@@ -148,9 +155,13 @@ export default function TeamsPage() {
                 </button>
                 <button
                   onClick={() => handleDelete(team.id)}
-                  className="rounded px-3 py-1.5 text-xs text-danger/50 hover:text-danger transition-colors"
+                  className={`rounded px-3 py-1.5 text-xs transition-colors ${
+                    confirmDelete === team.id
+                      ? "bg-danger/20 text-danger font-semibold"
+                      : "text-danger/50 hover:text-danger"
+                  }`}
                 >
-                  Delete
+                  {confirmDelete === team.id ? "Confirm?" : "Delete"}
                 </button>
               </div>
             </div>
